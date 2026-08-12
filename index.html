@@ -1184,23 +1184,27 @@
             }
 
             try {
-                // Petición adaptada enviando la clave moderna AQ. mediante cabecera Authorization Bearer
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`, {
+                // Hacemos la peticion a la URL y forzamos el alert de Google para ver el error
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
                     method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${apiKey}`
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
 
-                if (!response.ok) throw new Error("API Error: " + response.status);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    alert("⚠️ ERROR DE GOOGLE:\nCódigo: " + response.status + "\nDetalle: " + errorText);
+                    throw new Error("API Error: " + response.status);
+                }
 
                 const result = await response.json();
                 const text = result.candidates[0].content.parts[0].text;
                 return JSON.parse(text);
             } catch (err) {
                 console.error("Error Gemini:", err);
+                if (err.message === "Failed to fetch" || err.message.includes("NetworkError")) {
+                    alert("⚠️ ERROR DE CONEXIÓN:\nEl navegador bloqueó la conexión. Puede que Google haya desactivado la clave.");
+                }
                 return null;
             }
         }
