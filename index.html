@@ -389,17 +389,22 @@
                 </div>
             </div>
 
-            <!-- Acciones Inteligentes -->
-            <div class="grid grid-cols-2 gap-3">
+            <!-- Acciones Inteligentes (3 botones: Foto, Escribir, Favoritos) -->
+            <div class="grid grid-cols-3 gap-2">
                 <button onclick="playSound('click'); document.getElementById('file-input').click()" class="btn-liquid btn-primary-liquid py-3.5 flex flex-col items-center gap-1.5">
                     <i data-lucide="camera" class="w-5 h-5"></i>
-                    <span class="text-xs">Analizar Foto</span>
+                    <span class="text-[11px]">Foto</span>
                 </button>
                 <input type="file" id="file-input" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
 
                 <button onclick="playSound('click'); document.getElementById('manual-entry-modal').classList.remove('hidden')" class="btn-liquid py-3.5 flex flex-col items-center gap-1.5">
                     <i data-lucide="pen-line" class="w-5 h-5"></i>
-                    <span class="text-xs">Escribir Comida</span>
+                    <span class="text-[11px]">Escribir</span>
+                </button>
+
+                <button onclick="playSound('click'); openFavoritesModal()" class="btn-liquid py-3.5 flex flex-col items-center gap-1.5 border-amber-500/40 bg-amber-500/10 text-amber-300">
+                    <i data-lucide="star" class="w-5 h-5 text-amber-400"></i>
+                    <span class="text-[11px]">Favoritos</span>
                 </button>
             </div>
 
@@ -530,6 +535,24 @@
                 </form>
             </div>
         </main>
+
+        <!-- MODAL FAVORITOS (PANTALLA COMPLETA CON DIFUMINADO) -->
+        <div id="favorites-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-xl bg-black/80 fade-in">
+            <div class="liquid-panel w-full max-w-md p-6 shadow-2xl flex flex-col max-h-[85vh] border-amber-500/30">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+                        <i data-lucide="star" class="text-amber-400 fill-amber-400"></i> Comidas Favoritas
+                    </h3>
+                    <button onclick="playSound('click'); document.getElementById('favorites-modal').classList.add('hidden')" class="btn-liquid p-2 rounded-full">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+                <p class="text-xs text-slate-300 mb-4">Toca cualquier plato para registrarlo al instante sin gastar consultas de IA:</p>
+                <div id="favorites-list" class="flex-1 overflow-y-auto space-y-2.5 pr-1">
+                    <!-- Renderizado dinámicamente -->
+                </div>
+            </div>
+        </div>
 
         <!-- Modal para detalle del día seleccionado -->
         <div id="day-detail-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md bg-black bg-opacity-60">
@@ -794,7 +817,9 @@
         let todayGoal = 0;
         let todayEaten = 0;
         let unsubscribeLogs = null;
+        let unsubscribeFavorites = null;
         let allLogsCache = [];
+        let favoritesCache = [];
         let calendarDateView = new Date();
 
         const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
@@ -832,6 +857,7 @@
                 currentUser = user;
                 loadProfile();
                 listenToAllMeals();
+                listenToFavorites();
             }
         });
 
@@ -929,7 +955,6 @@
                 document.getElementById('macro-carb').textContent = `${totalCarb}g`;
                 document.getElementById('macro-fat').textContent = `${totalFat}g`;
 
-                // Barras de progreso de macros (con topes estimados de referencia: 150g prot, 250g carb, 70g fat)
                 document.getElementById('bar-prot').style.width = `${Math.min((totalProt / 150) * 100, 100)}%`;
                 document.getElementById('bar-carb').style.width = `${Math.min((totalCarb / 250) * 100, 100)}%`;
                 document.getElementById('bar-fat').style.width = `${Math.min((totalFat / 70) * 100, 100)}%`;
@@ -943,6 +968,95 @@
                 console.error("Error cargando comidas: ", error);
             });
         }
+
+        // --- GESTIÓN DE FAVORITOS ---
+        function listenToFavorites() {
+            if (!currentUser) return;
+            if (unsubscribeFavorites) unsubscribeFavorites();
+            const favsRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'favorites');
+            unsubscribeFavorites = onSnapshot(favsRef, (snapshot) => {
+                favoritesCache = [];
+                snapshot.forEach(doc => {
+                    favoritesCache.push({ id: doc.id, ...doc.data() });
+                });
+            });
+        }
+
+        window.openFavoritesModal = function() {
+            renderFavoritesModalList();
+            document.getElementById('favorites-modal').classList.remove('hidden');
+        };
+
+        function renderFavoritesModalList() {
+            const listEl = document.getElementById('favorites-list');
+            if (!listEl) return;
+            listEl.innerHTML = '';
+
+            if (favoritesCache.length === 0) {
+                listEl.innerHTML = `<div class="text-center text-xs py-8 liquid-panel-inner p-4 text-slate-400">
+                    No tienes favoritos guardados.<br>Toca la estrella ⭐ en tus comidas de hoy para guardarlas aquí.
+                </div>`;
+                return;
+            }
+
+            favoritesCache.forEach(fav => {
+                const el = document.createElement('div');
+                el.className = 'liquid-panel-inner p-3 flex justify-between items-center transform transition hover:scale-[1.01] hover:bg-opacity-20';
+                el.innerHTML = `
+                    <div class="flex items-center gap-3 cursor-pointer flex-1" onclick="logFavoriteFromModal('${fav.foodName}', ${fav.calories}, ${fav.protein || 0}, ${fav.carbs || 0}, ${fav.fat || 0}, '${fav.emoji || '🍽️'}')">
+                        <div class="w-10 h-10 bg-black bg-opacity-20 rounded-full flex items-center justify-center text-xl shadow-inner border border-white border-opacity-10">
+                            ${fav.emoji || '🍽️'}
+                        </div>
+                        <div>
+                            <h4 class="font-bold drop-shadow-sm capitalize text-slate-100 text-xs">${fav.foodName}</h4>
+                            <p class="text-[10px] text-slate-400 font-medium">${fav.calories} kcal • P:${fav.protein || 0}g C:${fav.carbs || 0}g G:${fav.fat || 0}g</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="logFavoriteFromModal('${fav.foodName}', ${fav.calories}, ${fav.protein || 0}, ${fav.carbs || 0}, ${fav.fat || 0}, '${fav.emoji || '🍽️'}')" class="btn-liquid btn-primary-liquid px-3 py-1.5 text-xs">
+                            Agregar
+                        </button>
+                        <button onclick="deleteFavorite('${fav.id}')" class="text-slate-400 hover:text-red-400 p-1.5 rounded-full transition-all hover:bg-red-500 hover:bg-opacity-20 active:scale-95" title="Borrar Favorito">
+                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+                `;
+                listEl.appendChild(el);
+            });
+            lucide.createIcons();
+        }
+
+        window.saveToFavorites = async function(foodName, calories, protein, carbs, fat, emoji) {
+            if (!currentUser) return;
+            playSound('success');
+            try {
+                const favsRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'favorites');
+                await addDoc(favsRef, { foodName, calories, protein, carbs, fat, emoji });
+                alert(`¡"${foodName}" guardado en favoritos! ⭐`);
+            } catch (err) {
+                console.error("Error al guardar favorito:", err);
+            }
+        };
+
+        window.deleteFavorite = async function(favId) {
+            if (!currentUser) return;
+            playSound('delete');
+            try {
+                const favRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'favorites', favId);
+                await deleteDoc(favRef);
+                renderFavoritesModalList();
+            } catch (err) {
+                console.error("Error al borrar favorito:", err);
+            }
+        };
+
+        window.logFavoriteFromModal = async function(foodName, calories, protein, carbs, fat, emoji) {
+            playSound('success');
+            document.getElementById('favorites-modal').classList.add('hidden');
+            showLoading("Registrando favorito...");
+            await saveFoodLog({ foodName, calories, protein, carbs, fat, emoji });
+            hideLoading();
+        };
 
         async function calculateRewardsAndBalance() {
             if (todayGoal <= 0) {
@@ -1036,13 +1150,16 @@
                         </div>
                         <div>
                             <h4 class="font-bold drop-shadow-sm capitalize text-slate-100 text-xs">${meal.foodName}</h4>
-                            <p class="text-[10px] text-slate-400 font-medium">${time} ${meal.protein ? `• P: ${meal.protein}g C: ${meal.carbs}g G: ${meal.fat}g` : ''}</p>
+                            <p class="text-[10px] text-slate-400 font-medium">${time} ${meal.protein !== undefined ? `• P:${meal.protein}g C:${meal.carbs}g G:${meal.fat}g` : ''}</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-2">
                         <div class="font-black text-emerald-400 text-sm drop-shadow-sm">
                             +${meal.calories}
                         </div>
+                        <button onclick="saveToFavorites('${meal.foodName}', ${meal.calories}, ${meal.protein || 0}, ${meal.carbs || 0}, ${meal.fat || 0}, '${meal.emoji || '🍽️'}')" class="text-slate-400 hover:text-amber-400 p-1.5 rounded-full transition-all hover:bg-amber-500 hover:bg-opacity-20 active:scale-95" title="Guardar en Favoritos">
+                            <i data-lucide="star" class="w-3.5 h-3.5"></i>
+                        </button>
                         <button onclick="deleteFood('${meal.id}')" class="text-slate-400 hover:text-red-400 p-1.5 rounded-full transition-all hover:bg-red-500 hover:bg-opacity-20 active:scale-95" title="Borrar Comida">
                             <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                         </button>
