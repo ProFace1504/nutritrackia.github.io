@@ -862,7 +862,7 @@
         const appId = 'nutritrack-pro-glass';
         
         // Clave de API configurada de forma segura
-        const apiKey = "AQ." + "Ab8RN6KmZoa-Hl-JQkUcyCbzebuLc3gIR9Fv3nnYmHo9unrjvQ".replace("AQ.", ""); 
+        const apiKey = "AQ." + "Ab8RN6L_je0CwdnSVprDmhSGRzt_aahulZbJGJwzZD6ICIQ9uA".replace("AQ.", ""); 
         let currentUser = null;
         let todayGoal = 0;
         let todayEaten = 0;
@@ -1056,7 +1056,7 @@
                 const el = document.createElement('div');
                 el.className = 'liquid-panel-inner p-3 flex justify-between items-center transform transition hover:scale-[1.01] hover:bg-opacity-20';
                 el.innerHTML = `
-                    <div class="flex items-center gap-3 cursor-pointer flex-1" onclick="logFavoriteFromModal('${fav.foodName}', ${fav.calories}, ${fav.protein || 0}, ${fav.carbs || 0}, ${fav.fat || 0}, '${fav.emoji || '🍽️️'}')">
+                    <div class="flex items-center gap-3 cursor-pointer flex-1" onclick="logFavoriteFromModal('${fav.foodName}', ${fav.calories}, ${fav.protein || 0}, ${fav.carbs || 0}, ${fav.fat || 0}, '${fav.emoji || '🍽'}')">
                         <div class="w-10 h-10 bg-black bg-opacity-20 rounded-full flex items-center justify-center text-xl shadow-inner border border-white border-opacity-10">
                             ${fav.emoji || '🍽️'}
                         </div>
@@ -1348,7 +1348,7 @@
                         <div class="font-black text-emerald-400 text-sm drop-shadow-sm">
                             +${meal.calories}
                         </div>
-                        <button onclick="saveToFavorites('${meal.foodName}', ${meal.calories}, ${meal.protein || 0}, ${meal.carbs || 0}, ${meal.fat || 0}, '${meal.emoji || '🍽️'}')" class="text-slate-400 hover:text-amber-400 p-1.5 rounded-full transition-all hover:bg-amber-500 hover:bg-opacity-20 active:scale-95" title="Guardar en Favoritos">
+                        <button onclick="saveToFavorites('${meal.foodName}', ${meal.calories}, ${meal.protein || 0}, ${meal.carbs || 0}, ${meal.fat || 0}, '${meal.emoji || '🍽️️'}')" class="text-slate-400 hover:text-amber-400 p-1.5 rounded-full transition-all hover:bg-amber-500 hover:bg-opacity-20 active:scale-95" title="Guardar en Favoritos">
                             <i data-lucide="star" class="w-3.5 h-3.5"></i>
                         </button>
                         <button onclick="deleteFood('${meal.id}')" class="text-slate-400 hover:text-red-400 p-1.5 rounded-full transition-all hover:bg-red-500 hover:bg-opacity-20 active:scale-95" title="Borrar Comida">
@@ -1473,7 +1473,7 @@
                 mealItem.className = "liquid-panel-inner p-3 flex justify-between items-center text-sm";
                 mealItem.innerHTML = `
                     <div class="flex items-center gap-2">
-                        <span class="text-xl">${m.emoji || '🍽️️'}</span>
+                        <span class="text-xl">${m.emoji || '🍽'}</span>
                         <div>
                             <p class="font-bold capitalize text-slate-100 text-xs">${m.foodName}</p>
                             <p class="text-[10px] text-slate-400">${time}</p>
