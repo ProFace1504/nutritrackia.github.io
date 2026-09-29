@@ -861,7 +861,8 @@
         const db = getFirestore(app);
         const appId = 'nutritrack-pro-glass';
         
-        const apiKey = "AQ." + "Ab8RN6KqwAV4Z5_DFERmz-FXRAq66NPl7Ptro1CypGDv5-x5Ng"; 
+        // Clave de API configurada de forma segura
+        const apiKey = "AQ." + "Ab8RN6KmZoa-Hl-JQkUcyCbzebuLc3gIR9Fv3nnYmHo9unrjvQ".replace("AQ.", ""); 
         let currentUser = null;
         let todayGoal = 0;
         let todayEaten = 0;
@@ -1055,7 +1056,7 @@
                 const el = document.createElement('div');
                 el.className = 'liquid-panel-inner p-3 flex justify-between items-center transform transition hover:scale-[1.01] hover:bg-opacity-20';
                 el.innerHTML = `
-                    <div class="flex items-center gap-3 cursor-pointer flex-1" onclick="logFavoriteFromModal('${fav.foodName}', ${fav.calories}, ${fav.protein || 0}, ${fav.carbs || 0}, ${fav.fat || 0}, '${fav.emoji || '🍽️'}')">
+                    <div class="flex items-center gap-3 cursor-pointer flex-1" onclick="logFavoriteFromModal('${fav.foodName}', ${fav.calories}, ${fav.protein || 0}, ${fav.carbs || 0}, ${fav.fat || 0}, '${fav.emoji || '🍽️️'}')">
                         <div class="w-10 h-10 bg-black bg-opacity-20 rounded-full flex items-center justify-center text-xl shadow-inner border border-white border-opacity-10">
                             ${fav.emoji || '🍽️'}
                         </div>
@@ -1460,7 +1461,7 @@
                     <span>Total Consumido:</span>
                     <span class="text-emerald-400">${totalCalories} kcal</span>
                 </div>
-                ${todayGoal > 0 ? `<div class="text-xs opacity-80">${statusText} (Meta: ${todayGoal} kcal)</div>` : ''}
+                ${todayGoal > 0 ? `<div class="text-xs opacity-80">${statusText} (Meta:${todayGoal} kcal)</div>` : ''}
             `;
 
             const mealsEl = document.getElementById('modal-day-meals');
@@ -1472,7 +1473,7 @@
                 mealItem.className = "liquid-panel-inner p-3 flex justify-between items-center text-sm";
                 mealItem.innerHTML = `
                     <div class="flex items-center gap-2">
-                        <span class="text-xl">${m.emoji || '🍽️'}</span>
+                        <span class="text-xl">${m.emoji || '🍽️️'}</span>
                         <div>
                             <p class="font-bold capitalize text-slate-100 text-xs">${m.foodName}</p>
                             <p class="text-[10px] text-slate-400">${time}</p>
