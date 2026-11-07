@@ -456,7 +456,7 @@ async function aiEstimate(text, file){
   const body = { text: text.trim() };
   if (file) { body.image = await shrink(file); body.mime = 'image/jpeg'; }
   const res = await fetch(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify(body) });
-  if (!res.ok) throw new Error('worker ' + res.status);
+  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || 'error ' + res.status); }
   const d = await res.json();
   return { name: d.name || text.trim() || 'Comida', k: Math.round(d.kcal || 0), p: Math.round(d.p || 0), c: Math.round(d.c || 0), g: Math.round(d.g || 0) };
 }
@@ -498,11 +498,11 @@ function init(){
     const btn = $('#analyze'); btn.disabled = true; btn.textContent = 'Calculando…';
     let e;
     try { e = await aiEstimate($('#desc').value, photoOn ? photoFile : null); }
-    catch (err) { e = estimate($('#desc').value, photoOn); e.aiError = true; }
+    catch (err) { e = { name: $('#desc').value.trim() || 'Comida', k: 0, p: 0, c: 0, g: 0, aiError: true, msg: err.message }; }
     btn.disabled = false; btn.textContent = 'Calcular';
     base = e;
     $('#r-name').value = e.name; $('#r-k').value = e.k; $('#r-p').value = e.p; $('#r-c').value = e.c; $('#r-g').value = e.g;
-    $('#r-note').textContent = e.aiError ? 'No se pudo consultar la IA. Ajustá los valores a mano.' : 'Estimación de la IA. Revisá los valores antes de guardar.';
+    $('#r-note').textContent = e.aiError ? 'No se pudo consultar la IA: ' + e.msg + '. Cargá los valores a mano.' : 'Estimación de la IA. Revisá los valores antes de guardar.';
     $('#res').hidden = false;
   };
 
