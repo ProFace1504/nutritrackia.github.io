@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, signInWithRedirect, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -32,44 +32,7 @@ function pushState(state) {
   }, 600);
 }
 window.platoPush = pushState;
+window.platoToken = () => (auth.currentUser ? auth.currentUser.getIdToken() : null);
 
 async function login() {
   try {
-    await signInWithPopup(auth, new GoogleAuthProvider());
-  } catch (e) {
-    gateMsg.textContent = "No se pudo iniciar sesión. Probá de nuevo.";
-  }
-}
-
-async function logout() {
-  await signOut(auth);
-  localStorage.removeItem("plato-v1");
-  location.reload();
-}
-
-gateBtn.onclick = login;
-authBtn.onclick = () => (auth.currentUser ? logout() : login());
-
-onAuthStateChanged(auth, async user => {
-  uid = user ? user.uid : null;
-  authBtn.textContent = user ? "Cerrar sesión" : "Iniciar sesión con Google";
-  statusEl.textContent = user ? "Conectado como " + user.email : "Sin sesión";
-
-  if (!user) {
-    // Sin sesión: no se usa ni se conserva nada en este navegador
-    localStorage.removeItem("plato-v1");
-    document.body.classList.add("locked");
-    gateMsg.textContent = "Iniciá sesión para ver y guardar tus comidas.";
-    return;
-  }
-
-  gateMsg.textContent = "Cargando tus datos…";
-  try {
-    const snap = await getDoc(ref());
-    if (snap.exists()) window.platoSet(snap.data().state); // la nube manda
-    else pushState(window.platoGet());                     // primera vez: subimos lo que haya
-    document.body.classList.remove("locked");
-  } catch (e) {
-    gateMsg.textContent = "No se pudieron cargar tus datos. Revisá la conexión y recargá la página.";
-  }
-});
